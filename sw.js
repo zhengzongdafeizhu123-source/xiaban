@@ -1,7 +1,9 @@
-var CACHE_NAME = 'off-work-countdown-v2';
+var CACHE_NAME = 'off-work-countdown-v3';
 var ASSETS = [
   '.',
   './index.html',
+  './countdown.js',
+  './hourglass.js',
   './manifest.webmanifest',
   './icon.svg',
   './off-work.png'

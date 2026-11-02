@@ -19,6 +19,20 @@
     justify-content: center;
     overflow: hidden;
   }
+  [hidden] { display: none !important; }
+  #stage { display: flex; flex-direction: column; align-items: center; gap: 30px; }
+  #hourglass { width: auto; height: min(58svh, 600px); max-width: 76vw; object-fit: contain; }
+  #stage[data-mode="hourglass"] #countdown { font-size: clamp(1.8rem, 5vw, 3rem); }
+  #views { display: flex; gap: 16px; }
+  #stage[data-mode="time"] #views { position: fixed; bottom: max(5svh, env(safe-area-inset-bottom)); }
+  .view { position: relative; display: grid; place-items: center; width: 44px; height: 44px;
+    border: 0; padding: 0; background: transparent; color: #666; cursor: pointer; }
+  .view svg { width: 21px; height: 21px; }
+  .view:hover, .view[aria-pressed="true"] { color: #fff; }
+  .view[aria-pressed="true"]::after { content: ''; position: absolute; bottom: 0;
+    width: 3px; height: 3px; border-radius: 50%; background: currentColor; }
+  .view:focus-visible { outline: 1px solid #aaa; outline-offset: 2px; border-radius: 4px; }
+  @media (max-height: 480px) { #hourglass { height: 48svh; } #stage { gap: 12px; } #views { bottom: 8px; } }
   #countdown {
     color: #fff;
     font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
@@ -55,54 +69,24 @@
 </style>
 </head>
 <body>
-<div id="countdown" hidden>00:00:00</div>
+<main id="stage" data-mode="hourglass" hidden>
+  <canvas id="hourglass" width="400" height="600" role="img" aria-label="上方为剩余上班时间，下方为已经过的上班时间"></canvas>
+  <div id="countdown">00:00:00</div>
+<nav id="views" aria-label="展示方式" hidden>
+  <button class="view" id="time-view" type="button" aria-label="纯时间" aria-pressed="false">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+  </button>
+  <button class="view" id="sand-view" type="button" aria-label="沙漏" aria-pressed="true">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 22h14M5 2h14M17 22v-4.17a2 2 0 0 0-.59-1.42L12 12l-4.41 4.41A2 2 0 0 0 7 17.83V22M7 2v4.17a2 2 0 0 0 .59 1.42L12 12l4.41-4.41A2 2 0 0 0 17 6.17V2"/></svg>
+  </button>
+</nav>
+</main>
 <img id="off-work" src="off-work.png" alt="拜拜了您嘞" hidden>
 <button id="install" type="button" hidden>安装到桌面</button>
+<script src="hourglass.js"></script>
+<script src="countdown.js"></script>
 <script>
   (function () {
-    var el = document.getElementById('countdown');
-    var offWork = document.getElementById('off-work');
-    var formatter = new Intl.DateTimeFormat('en-GB', {
-      timeZone: 'Asia/Shanghai',
-      hour12: false,
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit'
-    });
-
-    function pad(n) {
-      return n < 10 ? '0' + n : '' + n;
-    }
-
-    function tick() {
-      var parts = {};
-      formatter.formatToParts(new Date()).forEach(function (p) {
-        if (p.type !== 'literal') parts[p.type] = p.value;
-      });
-      var hour = parseInt(parts.hour, 10) % 24;
-      var minute = parseInt(parts.minute, 10);
-      var second = parseInt(parts.second, 10);
-
-      var working = hour >= 9 && hour < 18;
-      el.hidden = !working;
-      offWork.hidden = working;
-      if (!working) return;
-
-      var remaining = 18 * 3600 - (hour * 3600 + minute * 60 + second);
-
-      var h = Math.floor(remaining / 3600);
-      var m = Math.floor((remaining % 3600) / 60);
-      var s = remaining % 60;
-      el.textContent = pad(h) + ':' + pad(m) + ':' + pad(s);
-    }
-
-    function loop() {
-      tick();
-      setTimeout(loop, 1000 - (Date.now() % 1000));
-    }
-
-    loop();
-
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('sw.js').catch(function () {});
     }
