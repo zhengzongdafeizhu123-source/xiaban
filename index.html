@@ -144,14 +144,18 @@
 <dialog id="salary-dialog" aria-label="月收入设置">
   <input id="monthly-salary" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" maxlength="12" value="10000" aria-label="每月收入，人民币元，回车保存，Esc 取消">
 </dialog>
-<script src="hourglass.js"></script>
-<script src="work-calendar.js"></script>
-<script src="earnings.js"></script>
-<script src="countdown.js"></script>
+<script src="hourglass.js?v=5"></script>
+<script src="work-calendar.js?v=5"></script>
+<script src="earnings.js?v=5"></script>
+<script src="countdown.js?v=5"></script>
 <script>
   (function () {
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js').catch(function () {});
+      navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(function (registration) {
+        document.addEventListener('visibilitychange', function () {
+          if (!document.hidden) registration.update().catch(function () {});
+        });
+      }).catch(function () {});
     }
 
     var installBtn = document.getElementById('install');
