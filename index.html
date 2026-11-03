@@ -23,6 +23,46 @@
   #stage { display: flex; flex-direction: column; align-items: center; gap: 30px; }
   #hourglass { width: auto; height: min(58svh, 600px); max-width: 76vw; object-fit: contain; }
   #stage[data-mode="hourglass"] #countdown { font-size: clamp(1.8rem, 5vw, 3rem); }
+  #piggy { position: relative; width: min(820px, 94vw, 96svh); aspect-ratio: 4 / 3; }
+  #pig-art { display: block; width: 100%; height: 100%; object-fit: contain;
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 0 49.724%, 18.163% 49.724%, 18.163% 36.832%, 0 36.832%); }
+  #pig-tail { position: absolute; left: 10.014%; top: 36.832%; width: 8.149%; height: 12.892%;
+    padding: 0; margin: 0; border: 0; background: #000; cursor: pointer; touch-action: manipulation; }
+  #pig-tail img { display: block; width: 100%; height: 100%; transform-origin: right bottom; }
+  #pig-tail:focus-visible { outline: 1px dashed #888; outline-offset: 6px; }
+  #pig-tail::after, #pig-nose::after { content: ''; position: absolute; inset: -8px; }
+  #pig-nose { position: absolute; left: 82.873%; top: 42.818%; width: 7.735%; height: 16.575%;
+    padding: 0; margin: 0; border: 0; background: #000; cursor: pointer; touch-action: manipulation; }
+  #pig-nose img { display: block; width: 100%; height: 100%; transform-origin: left center; }
+  #pig-nose:focus-visible { outline: 1px dashed #888; outline-offset: 6px; }
+  #pig-nose.pressing img { animation: nose-press .24s ease-out; }
+  @keyframes nose-press { 0%, 100% { transform: scaleX(1); } 50% { transform: scaleX(.78); } }
+  #salary-dialog { padding: 26px; width: min(280px, 72vw); box-sizing: border-box; background: #080808;
+    color: #fff; border: 5px double #aaa; border-radius: 0; box-shadow: 7px 7px 0 #444; }
+  #salary-dialog::backdrop { background: rgba(0,0,0,.72); }
+  #monthly-salary { display: block; box-sizing: border-box; width: 100%; padding: 14px 8px; border: 3px inset #aaa;
+    outline: none; border-radius: 0; background: #000; color: #fff; text-align: center;
+    font: 400 28px / 1.2 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-variant-numeric: tabular-nums; }
+  #monthly-salary:focus { border-color: #eee; }
+  #pig-tail.tugging img { animation: tail-tug .3s ease-out; }
+  @keyframes tail-tug { 0%, 100% { transform: scaleX(1); } 40% { transform: scaleX(1.28) rotate(-3deg); } }
+  #earnings-total { position: absolute; left: 52%; top: 50%; transform: translate(-50%, -50%);
+    width: 58%; padding: 12px 0; border: 0; color: #fff; background: #000; text-align: center;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace; }
+  #earnings-value { display: block; font-size: clamp(25px, 6.5vw, 56px); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  #earnings-period-icon { display: block; height: 18px; margin-bottom: 12px; color: #777; }
+  #earnings-period-icon svg { width: 17px; height: 17px; }
+  #calendar-status { display: block; color: #888; font: 12px / 1.5 sans-serif; margin-top: 8px; }
+  #coin { position: absolute; left: 47.1%; top: 1%; width: 7%; height: auto; color: white; opacity: 0; }
+  #coin img { display: block; width: 100%; height: auto; image-rendering: pixelated; }
+  #gain { position: absolute; top: 4%; left: 64%; color: #fff;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+    font-size: clamp(13px, 3vw, 24px); font-weight: 400; line-height: 1; opacity: 0; white-space: nowrap; }
+  #piggy.earning #coin { animation: coin-drop 1s linear infinite; }
+  #piggy.earning #gain { animation: gain-rise 1s ease-out infinite; }
+  @keyframes coin-drop { 0% { opacity: 0; transform: translateY(-5px); } 12% { opacity: 1; } 75% { opacity: 1; transform: translateY(var(--coin-travel, 70px)); } 88%, 100% { opacity: 0; transform: translateY(var(--coin-travel, 70px)) scale(.7); } }
+  @keyframes gain-rise { 0% { opacity: 0; transform: translateY(8px); } 20%, 55% { opacity: 1; } 100% { opacity: 0; transform: translateY(-14px); } }
+  @media (prefers-reduced-motion: reduce) { #piggy.earning #coin { animation: none; opacity: 0; } #piggy.earning #gain { animation: none; opacity: 1; } #pig-tail.tugging img, #pig-nose.pressing img { animation: none; } }
   #views { display: flex; gap: 16px; }
   #stage[data-mode="time"] #views { position: fixed; bottom: max(5svh, env(safe-area-inset-bottom)); }
   .view { position: relative; display: grid; place-items: center; width: 44px; height: 44px;
@@ -72,6 +112,21 @@
 <main id="stage" data-mode="hourglass" hidden>
   <canvas id="hourglass" width="400" height="600" role="img" aria-label="上方为剩余上班时间，下方为已经过的上班时间"></canvas>
   <div id="countdown">00:00:00</div>
+  <section id="piggy" aria-label="收入存钱罐" hidden>
+    <img id="pig-art" src="piggy-bank.png" alt="像素存钱罐">
+    <button id="pig-tail" type="button" aria-label="当前显示今日累计，拉动猪尾巴切换本月累计"><img src="piggy-tail.png" alt=""></button>
+    <button id="pig-nose" type="button" aria-label="按猪鼻子修改月收入"><img src="piggy-nose.png" alt=""></button>
+    <span id="coin" aria-hidden="true"><img src="coin.png" alt=""></span>
+    <span id="gain" aria-hidden="true">+¥0.0000</span>
+    <output id="earnings-total" aria-label="今日累计收入" aria-live="off">
+      <span id="earnings-period-icon" aria-hidden="true">
+        <svg id="today-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.65 17.65l1.42 1.42M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.65 6.35l1.42-1.42"/></svg>
+        <svg id="month-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:none"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M8 14h2M14 14h2M8 18h2M14 18h2"/></svg>
+      </span>
+      <span id="earnings-value">¥0.00</span>
+      <span id="calendar-status" hidden></span>
+    </output>
+  </section>
 <nav id="views" aria-label="展示方式" hidden>
   <button class="view" id="time-view" type="button" aria-label="纯时间" aria-pressed="false">
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -79,11 +134,19 @@
   <button class="view" id="sand-view" type="button" aria-label="沙漏" aria-pressed="true">
     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 22h14M5 2h14M17 22v-4.17a2 2 0 0 0-.59-1.42L12 12l-4.41 4.41A2 2 0 0 0 7 17.83V22M7 2v4.17a2 2 0 0 0 .59 1.42L12 12l4.41-4.41A2 2 0 0 0 17 6.17V2"/></svg>
   </button>
+  <button class="view" id="money-view" type="button" aria-label="存钱罐" aria-pressed="false">
+    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 5c-1.5 0-2.8 1.4-3 2-1.3-.6-2.7-1-4-1-5 0-9 3-9 7 0 1.8.8 3.4 2.2 4.6L5 21h4l.7-2.1c1.5.3 3.1.3 4.6 0L15 21h4l-.2-3.4c.9-.8 1.6-1.8 2-2.9H23v-5h-2.2a7 7 0 0 0-1.6-2.3L19 5ZM2 9c-1 0-1 3 1 3M10 10h4"/><circle cx="17" cy="11" r=".5"/></svg>
+  </button>
 </nav>
 </main>
 <img id="off-work" src="off-work.png" alt="拜拜了您嘞" hidden>
 <button id="install" type="button" hidden>安装到桌面</button>
+<dialog id="salary-dialog" aria-label="月收入设置">
+  <input id="monthly-salary" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" maxlength="12" value="10000" aria-label="每月收入，人民币元，回车保存，Esc 取消">
+</dialog>
 <script src="hourglass.js"></script>
+<script src="work-calendar.js"></script>
+<script src="earnings.js"></script>
 <script src="countdown.js"></script>
 <script>
   (function () {
