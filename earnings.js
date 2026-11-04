@@ -35,7 +35,7 @@
     var workdays = days(clock.year, clock.month);
     if (!workdays || !workdays.length) return { clock: clock, available: false, earning: false };
     var isWorkday = workdays.indexOf(clock.day) >= 0;
-    var elapsed = isWorkday ? clock.elapsed : 0;
+    var elapsed = isWorkday ? Math.min(SHIFT, clock.elapsed + now.getMilliseconds() / 1000) : 0;
     var beforeReset = clock.day < workdays[0] || (clock.day === workdays[0] && clock.second < START);
     var completed = workdays.filter(function (d) { return d < clock.day; }).length;
     var rate = salary / workdays.length / SHIFT;
@@ -45,6 +45,33 @@
       today: elapsed * rate, month: beforeReset ? salary : Math.min(salary, (completed * SHIFT + elapsed) * rate),
       progress: (completed * SHIFT + elapsed) / (workdays.length * SHIFT), workdays: workdays.length, period: period };
   }
-  root.WorkClock = { read: read, start: START, end: END, shift: SHIFT };
-  root.WorkEarnings = { at: at, days: days, monthlySalary: 10000 };
+  function nextStart(now) {
+    var clock = read(now);
+    for (var offset = 0; offset <= 370; offset++) {
+      var date = new Date(Date.UTC(clock.year, clock.month - 1, clock.day + offset));
+      var year = date.getUTCFullYear(), month = date.getUTCMonth() + 1, day = date.getUTCDate();
+      var workdays = days(year, month);
+      if (!workdays) return null;
+      var start = Date.UTC(year, month - 1, day, 1); // 09:00 Asia/Shanghai.
+      if (start > now.getTime() && workdays.indexOf(day) >= 0) return start;
+    }
+    return null;
+  }
+  root.WorkClock = { read: read, nextStart: nextStart, start: START, end: END, shift: SHIFT };
+  function segments(from, to, salary) {
+    if (to <= from) return [];
+    var first = read(new Date(from)), last = read(new Date(to)), result = [];
+    var begin = Date.UTC(first.year, first.month - 1, first.day);
+    var finish = Date.UTC(last.year, last.month - 1, last.day);
+    for (var stamp = begin; stamp <= finish; stamp += 86400000) {
+      var d = new Date(stamp), year = d.getUTCFullYear(), month = d.getUTCMonth() + 1, day = d.getUTCDate();
+      var workdays = days(year, month);
+      if (!workdays) break;
+      if (workdays.indexOf(day) < 0) continue;
+      var start = Math.max(from, stamp + 3600000), end = Math.min(to, stamp + 36000000);
+      if (end > start) result.push({ start: start, end: end, key: year + '-' + pad(month) + '-' + pad(day), rate: salary / workdays.length / SHIFT });
+    }
+    return result;
+  }
+  root.WorkEarnings = { at: at, days: days, segments: segments, monthlySalary: 10000 };
 })(typeof window === 'undefined' ? globalThis : window);

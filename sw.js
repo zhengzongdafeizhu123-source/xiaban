@@ -1,8 +1,9 @@
-var CACHE_NAME = 'off-work-countdown-v5';
+var CACHE_NAME = 'off-work-countdown-v6';
 var ASSETS = [
-  './?v=5', './index.html?v=5', './countdown.js?v=5', './hourglass.js?v=5',
-  './earnings.js?v=5', './work-calendar.js?v=5',
+  './?v=6', './index.html?v=6', './countdown.js?v=6', './hourglass.js?v=6',
+  './earnings.js?v=6', './work-calendar.js?v=6', './overdrive.js?v=6', './digits.js?v=6', './pig-effects.js?v=6',
   './piggy-bank.png', './piggy-tail.png', './piggy-nose.png', './coin.png',
+  './piggy-gold.png', './rage-red.png', './rage-violet.png', './rage-cyan.png', './piggy-exhausted.png',
   './manifest.webmanifest', './icon.svg', './off-work.png'
 ];
 self.addEventListener('install', function (event) {
@@ -18,7 +19,7 @@ self.addEventListener('activate', function (event) {
       windows.filter(function (client) { return client.url.indexOf(self.registration.scope) === 0; }).forEach(function (client) {
         // Do not await navigation here: fetch must be allowed to run after activation completes.
         var updated = new URL(client.url);
-        updated.searchParams.set('v', '5');
+        updated.searchParams.set('v', '6');
         client.navigate(updated.href).catch(function () {});
       });
     })
@@ -39,7 +40,7 @@ self.addEventListener('fetch', function (event) {
       }).catch(function () {
         return cache.match(event.request).then(function (cached) {
           if (cached) return cached;
-          if (event.request.mode === 'navigate') return cache.match('./index.html?v=5');
+          if (event.request.mode === 'navigate') return cache.match('./index.html?v=6');
           return Response.error();
         });
       });
