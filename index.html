@@ -6,6 +6,7 @@
 <title>下班倒计时</title>
 <meta name="theme-color" content="#000000">
 <link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="wardrobe.css?v=9">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='white'/%3E%3C/svg%3E">
 <style>
   html, body {
@@ -24,30 +25,13 @@
   body[data-money-look="gold"] #money-atmosphere { display: block; }
   #stage, #off-work, #next-work-countdown { position: relative; z-index: 1; }
   #pig-effects { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 3; overflow: visible; }
-  #pig-ear, #pig-belly { position: absolute; padding: 0; border: 0; background: transparent; cursor: default; outline: none; }
-  #pig-ear { left: 69%; top: 17%; width: 10%; height: 17.5%; min-width: 44px; min-height: 44px; }
-  #pig-belly { left: 20%; top: 64%; width: 57%; height: 16%; min-height: 44px; }
   #piggy.fx-ready #coin, #piggy.fx-ready #gain { display: none; }
-  #piggy:not([data-look="normal"]) #pig-art { clip-path: none; }
-  #piggy:not([data-look="normal"]) #pig-tail img, #piggy:not([data-look="normal"]) #pig-nose img { opacity: 0; }
-  #piggy:not([data-look="normal"]) #pig-tail, #piggy:not([data-look="normal"]) #pig-nose { background: transparent; }
-  #piggy[data-look="exhausted"] #earnings-total { top: 58%; }
-  #piggy[data-look="exhausted"] #pig-tail { left: 7%; top: 65%; width: 13%; height: 15%; }
-  #piggy[data-look="exhausted"] #pig-nose { left: 81%; top: 62%; width: 10%; height: 14%; }
-  #piggy[data-look="exhausted"] #pig-art { animation: pant 2s ease-in-out infinite; transform-origin: center 78%; }
   #piggy[data-look="gold"] #pig-art { animation: pearl-shine 2.7s ease-in-out infinite; }
-  #piggy[data-look="red"] #pig-art, #piggy[data-look="violet"] #pig-art, #piggy[data-look="cyan"] #pig-art { animation: overdrive-shake .16s linear infinite; }
   body[data-money-look="gold"] #earnings-total, body[data-money-look="gold"] .view[aria-pressed="true"] { color: #f4cc62; }
   .digit-6, .digit-8 { color: #e9ba55; }
   .digit-8 { animation: digit-twinkle 1.7s ease-in-out infinite; }
   @keyframes digit-twinkle { 0%,100% { text-shadow: 0 0 2px #b98124; } 45% { text-shadow: 0 0 5px #fff4bb, 0 0 12px #e7ad35; } }
   @keyframes pearl-shine { 0%,100% { filter: brightness(1); } 50% { filter: brightness(1.22); } }
-  @keyframes pant { 0%,100% { transform: scaleY(1); } 50% { transform: scaleY(1.018); } }
-  @keyframes overdrive-shake { 0%,100% { transform: translate(0,0); } 25% { transform: translate(1px,-1px); } 75% { transform: translate(-1px,1px); } }
-  #salary-wrap { position: relative; }
-  #salary-readout { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none;
-    font: 400 28px / 1.2 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; white-space: pre; }
-  #monthly-salary { color: transparent !important; caret-color: white; }
   @media (prefers-reduced-motion: reduce) { .digit-8, #piggy #pig-art { animation: none !important; } }
   #stage { display: flex; flex-direction: column; align-items: center; gap: 30px; }
   #hourglass { width: auto; height: min(58svh, 600px); max-width: 76vw; object-fit: contain; }
@@ -59,20 +43,7 @@
     padding: 0; margin: 0; border: 0; background: #000; cursor: pointer; touch-action: manipulation; }
   #pig-tail img { display: block; width: 100%; height: 100%; transform-origin: right bottom; }
   #pig-tail:focus-visible { outline: 1px dashed #888; outline-offset: 6px; }
-  #pig-tail::after, #pig-nose::after { content: ''; position: absolute; inset: -8px; }
-  #pig-nose { position: absolute; left: 82.873%; top: 42.818%; width: 7.735%; height: 16.575%;
-    padding: 0; margin: 0; border: 0; background: #000; cursor: pointer; touch-action: manipulation; }
-  #pig-nose img { display: block; width: 100%; height: 100%; transform-origin: left center; }
-  #pig-nose:focus-visible { outline: 1px dashed #888; outline-offset: 6px; }
-  #pig-nose.pressing img { animation: nose-press .24s ease-out; }
-  @keyframes nose-press { 0%, 100% { transform: scaleX(1); } 50% { transform: scaleX(.78); } }
-  #salary-dialog { padding: 26px; width: min(280px, 72vw); box-sizing: border-box; background: #080808;
-    color: #fff; border: 5px double #aaa; border-radius: 0; box-shadow: 7px 7px 0 #444; }
-  #salary-dialog::backdrop { background: rgba(0,0,0,.72); }
-  #monthly-salary { display: block; box-sizing: border-box; width: 100%; padding: 14px 8px; border: 3px inset #aaa;
-    outline: none; border-radius: 0; background: #000; color: #fff; text-align: center;
-    font: 400 28px / 1.2 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-variant-numeric: tabular-nums; }
-  #monthly-salary:focus { border-color: #eee; }
+  #pig-tail::after { content: ''; position: absolute; inset: -8px; }
   #pig-tail.tugging img { animation: tail-tug .3s ease-out; }
   @keyframes tail-tug { 0%, 100% { transform: scaleX(1); } 40% { transform: scaleX(1.28) rotate(-3deg); } }
   #earnings-total { position: absolute; left: 52%; top: 50%; transform: translate(-50%, -50%);
@@ -91,7 +62,7 @@
   #piggy.earning #gain { animation: gain-rise 1s ease-out infinite; }
   @keyframes coin-drop { 0% { opacity: 0; transform: translateY(-5px); } 12% { opacity: 1; } 75% { opacity: 1; transform: translateY(var(--coin-travel, 70px)); } 88%, 100% { opacity: 0; transform: translateY(var(--coin-travel, 70px)) scale(.7); } }
   @keyframes gain-rise { 0% { opacity: 0; transform: translateY(8px); } 20%, 55% { opacity: 1; } 100% { opacity: 0; transform: translateY(-14px); } }
-  @media (prefers-reduced-motion: reduce) { #piggy.earning #coin { animation: none; opacity: 0; } #piggy.earning #gain { animation: none; opacity: 1; } #pig-tail.tugging img, #pig-nose.pressing img { animation: none; } }
+  @media (prefers-reduced-motion: reduce) { #piggy.earning #coin { animation: none; opacity: 0; } #piggy.earning #gain { animation: none; opacity: 1; } #pig-tail.tugging img { animation: none; } }
   #views { display: flex; gap: 16px; }
   #stage[data-mode="time"] #views { position: fixed; bottom: max(5svh, env(safe-area-inset-bottom)); }
   .view { position: relative; display: grid; place-items: center; width: 44px; height: 44px;
@@ -140,6 +111,7 @@
 </style>
 </head>
 <body>
+<div id="skin-background" aria-hidden="true" hidden><img id="skin-background-art" alt=""></div>
 <canvas id="money-atmosphere" aria-hidden="true"></canvas>
 <main id="stage" data-mode="hourglass" hidden>
   <canvas id="hourglass" width="400" height="600" role="img" aria-label="上方为剩余上班时间，下方为已经过的上班时间"></canvas>
@@ -147,18 +119,16 @@
   <section id="piggy" data-look="normal" aria-label="收入存钱罐" hidden>
     <img id="pig-art" src="piggy-bank.png" alt="像素存钱罐">
     <button id="pig-tail" type="button" aria-label="当前显示今日累计，拉动猪尾巴切换本月累计"><img src="piggy-tail.png" alt=""></button>
-    <button id="pig-nose" type="button" aria-label="按猪鼻子修改月收入"><img src="piggy-nose.png" alt=""></button>
-    <button id="pig-ear" type="button" aria-label="猪耳朵"></button>
-    <button id="pig-belly" type="button" aria-label="猪肚子颗粒区"></button>
     <canvas id="pig-effects" aria-hidden="true"></canvas>
     <span id="coin" aria-hidden="true"><img src="coin.png" alt=""></span>
     <span id="gain" aria-hidden="true">+¥0.0000</span>
-    <output id="earnings-total" aria-label="今日累计收入" aria-live="off">
+    <output id="earnings-total" aria-label="可用余额" aria-live="off">
       <span id="earnings-period-icon" aria-hidden="true">
+        <svg id="balance-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 7l2-3h12m4 7h-6v4h6"/></svg>
         <svg id="today-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.42 1.42M17.65 17.65l1.42 1.42M2 12h2M20 12h2M4.93 19.07l1.42-1.42M17.65 6.35l1.42-1.42"/></svg>
         <svg id="month-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:none"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M8 14h2M14 14h2M8 18h2M14 18h2"/></svg>
       </span>
-      <span id="earnings-value">¥0.00</span>
+      <span id="earnings-value">—</span>
       <span id="calendar-status" hidden></span>
     </output>
   </section>
@@ -177,22 +147,36 @@
 <img id="off-work" src="off-work.png" alt="拜拜了您嘞" hidden>
 <div id="next-work-countdown" role="timer" aria-label="距离下一个工作日早上九点" hidden></div>
 <button id="install" type="button" hidden>安装到桌面</button>
-<dialog id="salary-dialog" aria-label="月收入设置">
-  <div id="salary-wrap">
-  <input id="monthly-salary" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" maxlength="12" value="10000" aria-label="每月收入，人民币元，回车保存，Esc 取消">
-  <span id="salary-readout" aria-hidden="true">10000</span>
+<button id="skin-open" type="button" aria-haspopup="dialog" hidden>皮肤管理</button>
+<dialog id="skin-window" aria-labelledby="skin-heading">
+  <div class="skin-toolbar">
+    <h2 id="skin-heading">皮肤管理</h2>
+    <output id="skin-credit" aria-live="off">余额 —</output>
+    <span id="skin-result-source" hidden></span>
+    <button id="skin-close" type="button" aria-label="关闭皮肤管理">关闭</button>
   </div>
+  <nav id="skin-nav" aria-label="皮肤管理导航"></nav>
+  <p id="skin-message" role="status"></p>
+  <section id="skin-screen" tabindex="-1" aria-labelledby="skin-heading"></section>
 </dialog>
-<script src="hourglass.js?v=6"></script>
-<script src="work-calendar.js?v=6"></script>
-<script src="earnings.js?v=6"></script>
-<script src="overdrive.js?v=6"></script>
-<script src="digits.js?v=6"></script>
-<script src="pig-effects.js?v=6"></script>
-<script src="countdown.js?v=6"></script>
+<script src="catalog.js?v=9"></script>
+<script src="hourglass.js?v=9"></script>
+<script src="work-calendar.js?v=9"></script>
+<script src="earnings.js?v=9"></script>
+<script src="digits.js?v=9"></script>
+<script src="pig-effects.js?v=9"></script>
+<script src="cdk-catalog.js?v=9"></script>
+<script src="wallet-rules.js?v=9"></script>
+<script src="wallet-client.js?v=9"></script>
+<script src="wardrobe.js?v=9"></script>
+<script src="skin-motion.js?v=9"></script>
+<script src="countdown.js?v=9"></script>
 <script>
   (function () {
     if ('serviceWorker' in navigator) {
+      var versionedUrl = new URL(location.href);
+      versionedUrl.searchParams.set('v', '9');
+      if (location.href !== versionedUrl.href) history.replaceState(history.state, '', versionedUrl);
       navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(function (registration) {
         document.addEventListener('visibilitychange', function () {
           if (!document.hidden) registration.update().catch(function () {});
