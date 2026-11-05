@@ -2,6 +2,7 @@
   'use strict';
   const { items, pool, odds, prices, weights, version, micro, duplicates, craftCost, exchangeRate } = root.SkinCatalog;
   const hour = 3600000, shift = 9 * hour, salary = WorkEarnings.monthlySalary;
+  const earningsStart = Date.parse('2026-11-02T09:00:00+08:00');
   const pad = n => String(n).padStart(2, '0');
   const dayKey = clock => clock.year + '-' + pad(clock.month) + '-' + pad(clock.day);
   const epoch = n => Number.isSafeInteger(n) && n >= 0 && n <= 8640000000000000;
@@ -16,9 +17,9 @@
   const drawSources = ['welcome', 'checkin', 'paid', 'cdk'];
   const fail = code => { throw Error(code); };
 
-  function newSave(now) {
+  function newSave() {
     return {
-      schema: 1, id: crypto.randomUUID(), since: now, cursor: now, balance: 0, income: {}, owned: [], stock: {},
+      schema: 1, id: crypto.randomUUID(), since: earningsStart, cursor: earningsStart, balance: 0, income: {}, owned: [], stock: {},
       equipped: { pig: null, background: null }, goldUntil: 0, welcome: false, checkin: '', redeemed: [], history: []
     };
   }
@@ -48,12 +49,27 @@
     return result;
   }
 
-  function settle(save, now) {
-    const due = earned(save.cursor, now);
-    for (const { day, amount } of due.entries) {
+  function creditIncome(save, entries) {
+    for (const { day, amount } of entries) {
       save.income[day] = (save.income[day] || 0) + amount;
       save.balance += amount;
     }
+  }
+
+  function settle(save, now) {
+    if (save.since > earningsStart) {
+      // Fill the missing interval before the old account's original start.
+      const backfill = earned(save.backfillCursor ?? earningsStart, Math.min(save.since, now));
+      creditIncome(save, backfill.entries);
+      if (backfill.cursor === save.since) {
+        save.since = earningsStart;
+        delete save.backfillCursor;
+      } else {
+        save.backfillCursor = backfill.cursor;
+      }
+    }
+    const due = earned(save.cursor, now);
+    creditIncome(save, due.entries);
     save.cursor = due.cursor;
     if (save.equipped.pig === 'G01' && save.goldUntil <= now) save.equipped.pig = null;
   }
@@ -232,6 +248,8 @@
     if (!record(save) || save.schema !== 1 ||
         typeof save.id !== 'string' || !/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/.test(save.id) ||
         !epoch(save.since) || !epoch(save.cursor) || save.cursor < save.since || !epoch(save.goldUntil) ||
+        (save.backfillCursor !== undefined &&
+          (!epoch(save.backfillCursor) || save.backfillCursor < earningsStart || save.backfillCursor >= save.since)) ||
         !nonnegative(save.balance) || typeof save.welcome !== 'boolean' ||
         !(save.checkin === '' || dateKey(save.checkin))) return false;
     if (!record(save.income) || !Object.entries(save.income).every(([day, amount]) => dateKey(day) && nonnegative(amount)) ||

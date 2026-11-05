@@ -1,4 +1,4 @@
-const release = '9';
+const release = '10';
 const prefix = 'off-work-countdown-v';
 const cacheName = prefix + release;
 const html = './index.html?v=' + release;

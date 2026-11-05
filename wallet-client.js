@@ -69,7 +69,7 @@
   }
 
   function settle(existing, now) {
-    const current = existing || rules.newSave(now);
+    const current = existing || rules.newSave();
     rules.settle(current, now);
     return current;
   }
