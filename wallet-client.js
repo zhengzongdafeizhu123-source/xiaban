@@ -10,8 +10,10 @@
   function openDatabase() {
     if (!opening) {
       opening = new Promise((resolve, reject) => {
-        const request = indexedDB.open(databaseName, 1);
-        request.onupgradeneeded = () => request.result.createObjectStore('saves');
+        const request = indexedDB.open(databaseName, 2);
+        request.onupgradeneeded = event => {
+          if (event.oldVersion === 0) request.result.createObjectStore('saves');
+        };
         request.onerror = () => reject(Error('storage'));
         request.onsuccess = () => {
           const database = request.result;

@@ -36,7 +36,7 @@
   function quantity(key) { return wallet.state()?.stock[key] || 0; }
   function available(skin) {
     var current = wallet.state();
-    return skin.id === 'G01' ? current?.goldUntil > wallet.now() : current?.owned.includes(skin.id);
+    return skin.id === 'G01' ? current?.goldRemaining > 0 : current?.owned.includes(skin.id);
   }
   function equipped(skin) {
     return wallet.state()?.equipped[skin.slot] === skin.id && available(skin);
@@ -47,8 +47,16 @@
     return Math.max(0, Math.floor((quantity(skin.id) - catalog.craftCost) / catalog.exchangeRate));
   }
   function expiry() {
-    var ms = Math.max(0, (wallet.state()?.goldUntil || 0) - wallet.now());
+    var ms = wallet.state()?.goldRemaining || 0;
     return ms ? Math.ceil(ms / 3600000) + ' 小时内' : '';
+  }
+  function goldStatus() {
+    var state = wallet.state();
+    var seconds = Math.ceil(state.goldRemaining / 1000);
+    var hours = Math.floor(seconds / 3600);
+    var minutes = String(Math.floor(seconds % 3600 / 60)).padStart(2, '0');
+    var tail = String(seconds % 60).padStart(2, '0');
+    return '剩余 ' + hours + ' 小时 ' + minutes + ' 分 ' + tail + ' 秒 · ' + (state.goldCounting ? '计时中' : '已暂停');
   }
   function tickets() {
     return Object.keys(wallet.state()?.stock || {}).filter(key => key.startsWith('G:'))
@@ -179,8 +187,9 @@
       node('h3', '', skin.name), node('p', '', catalog.effects[skin.id] || '静态像素外观'),
       node('p', 'skin-detail-status', status(skin)));
     if (skin.id === 'C04') info.append(node('p', '', '集齐三款炫彩猪皮自动解锁，也可用指定 CDK 获得。'));
-    if (skin.id === 'G01' && has) {
-      info.append(node('p', '', '到期时间 ' + new Date(wallet.state().goldUntil).toLocaleString('zh-CN', { timeZone:'Asia/Shanghai' }) + '（北京时间）'));
+    if (skin.id === 'G01') {
+      info.append(node('p', '', '仅在工作日北京时间 9:00–18:00 扣减时长。'));
+      if (has) info.append(node('p', 'skin-gold-time', goldStatus()));
     }
     var actions = node('div', 'skin-actions');
     actions.append(button('换上', () => mutate('equip', { slot:skin.slot, skin:skin.id }, () => setMessage('已换上「' + skin.name + '」。')),
@@ -434,7 +443,13 @@
   setInterval(function () {
     if (dialog.open) {
       paint();
-      if (pane === 'detail' && selected?.id === 'G01' && screen.querySelector('.skin-detail-status')?.textContent !== status(selected)) render();
+      if (pane === 'detail' && selected?.id === 'G01') {
+        if (screen.querySelector('.skin-detail-status')?.textContent !== status(selected)) render();
+        else {
+          var time = screen.querySelector('.skin-gold-time');
+          if (time) time.textContent = goldStatus();
+        }
+      }
     }
   }, 1000);
 })();

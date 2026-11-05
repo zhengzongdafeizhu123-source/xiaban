@@ -20,7 +20,7 @@
   function newSave() {
     return {
       schema: 1, id: crypto.randomUUID(), since: earningsStart, cursor: earningsStart, balance: 0, income: {}, owned: [], stock: {},
-      equipped: { pig: null, background: null }, goldUntil: 0, welcome: false, checkin: '', redeemed: [], history: []
+      equipped: { pig: null, background: null }, goldTime: null, welcome: false, checkin: '', redeemed: [], history: []
     };
   }
 
@@ -56,6 +56,13 @@
     }
   }
 
+  function remainingGold(gold, now) {
+    if (!gold) return 0;
+    const used = WorkEarnings.segments(gold.since, now, salary)
+      .reduce((total, segment) => total + segment.end - segment.start, 0);
+    return Math.max(0, gold.budget - used);
+  }
+
   function settle(save, now) {
     if (save.since > earningsStart) {
       // Fill the missing interval before the old account's original start.
@@ -71,7 +78,14 @@
     const due = earned(save.cursor, now);
     creditIncome(save, due.entries);
     save.cursor = due.cursor;
-    if (save.equipped.pig === 'G01' && save.goldUntil <= now) save.equipped.pig = null;
+    if (save.goldTime === undefined) {
+      save.goldTime = save.goldUntil > now ? { since: now, budget: save.goldUntil - now } : null;
+      delete save.goldUntil;
+    }
+    if (!remainingGold(save.goldTime, now)) {
+      save.goldTime = null;
+      if (save.equipped.pig === 'G01') save.equipped.pig = null;
+    }
   }
 
   function view(save, now) {
@@ -89,7 +103,8 @@
     }
     return {
       id: save.id, balance, today, month: monthly, owned: save.owned, stock: save.stock, equipped: save.equipped,
-      goldUntil: save.goldUntil, history: save.history, calendarReady: sample.available && due.cursor >= now,
+      goldRemaining: remainingGold(save.goldTime, now), goldCounting: sample.earning,
+      history: save.history, calendarReady: sample.available && due.cursor >= now,
       drawGifts: { welcomeClaimed: save.welcome, checkedIn: save.checkin >= day, day,
         singles: count(save, 'free:1') + count(save, 'free:cdk:1'), tens: count(save, 'free:10') + count(save, 'free:cdk:10') }
     };
@@ -213,7 +228,7 @@
         if (!['pig', 'background'].includes(payload.slot)) fail('slot');
         if (payload.skin !== null) {
           if (!skin || skin.slot !== payload.slot) fail('slot');
-          if (skin.id === 'G01' ? save.goldUntil <= now : !save.owned.includes(skin.id)) fail('locked');
+          if (skin.id === 'G01' ? !remainingGold(save.goldTime, now) : !save.owned.includes(skin.id)) fail('locked');
         }
         save.equipped[payload.slot] = payload.skin;
         return {};
@@ -236,9 +251,10 @@
       case 'gold':
         if (!positive(payload.hours, 8760)) fail('stock');
         adjustStock(save, 'G:' + payload.hours, -1);
-        save.goldUntil = Math.max(now, save.goldUntil) + payload.hours * hour;
+        if (remainingGold(save.goldTime, now)) save.goldTime.budget += payload.hours * hour;
+        else save.goldTime = { since: now, budget: payload.hours * hour };
         save.equipped.pig = 'G01';
-        return { goldUntil: save.goldUntil };
+        return { goldRemaining: remainingGold(save.goldTime, now) };
       case 'redeem': return redeem(save, payload.digest);
       default: fail('route');
     }
@@ -247,7 +263,9 @@
   function validSave(save) {
     if (!record(save) || save.schema !== 1 ||
         typeof save.id !== 'string' || !/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/.test(save.id) ||
-        !epoch(save.since) || !epoch(save.cursor) || save.cursor < save.since || !epoch(save.goldUntil) ||
+        !epoch(save.since) || !epoch(save.cursor) || save.cursor < save.since ||
+        (save.goldTime === undefined ? !epoch(save.goldUntil) : save.goldTime !== null &&
+          (!record(save.goldTime) || !epoch(save.goldTime.since) || !positive(save.goldTime.budget, Number.MAX_SAFE_INTEGER))) ||
         (save.backfillCursor !== undefined &&
           (!epoch(save.backfillCursor) || save.backfillCursor < earningsStart || save.backfillCursor >= save.since)) ||
         !nonnegative(save.balance) || typeof save.welcome !== 'boolean' ||

@@ -52,7 +52,7 @@
     if (!state) return;
     var data = wallet.state(), equipped = data?.equipped;
     var skin = SkinCatalog.items[equipped?.pig], backdrop = SkinCatalog.items[equipped?.background];
-    if (skin?.id === 'G01' && data.goldUntil <= wallet.now()) skin = null;
+    if (skin?.id === 'G01' && !data.goldRemaining) skin = null;
     var look = skin?.id === 'G01' ? 'gold' : 'normal';
     var visible = working && mode === 'money';
     var value = wallet.read(period);
