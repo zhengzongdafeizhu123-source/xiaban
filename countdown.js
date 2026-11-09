@@ -8,6 +8,7 @@
   var mode = 'hourglass', period = 'balance';
   var wallet = PigWallet, skinOpen = byId('skin-open'), background = byId('skin-background');
   var art = byId('pig-art'), backgroundArt = byId('skin-background-art');
+  var defaultArt = byId('pig-default-art'), tailArt = byId('pig-tail-art');
   var nextCountdown = byId('next-work-countdown'), peekUntil = 0, nextTarget = 0, peekTimer = 0;
   function peekNextWorkday() {
     var now = new Date(wallet.now());
@@ -71,8 +72,12 @@
     if (skin?.effect && look !== 'gold') piggy.dataset.effect = skin.effect;
     else delete piggy.dataset.effect;
     document.body.dataset.moneyLook = visible ? look : 'normal';
-    var source = skin ? SkinCatalog.artUrl(skin.art) : 'piggy-bank.png';
-    if (art.getAttribute('src') !== source) art.setAttribute('src', source);
+    art.hidden = !skin;
+    defaultArt.hidden = Boolean(skin);
+    if (skin) {
+      var source = SkinCatalog.artUrl(skin.art);
+      if (art.getAttribute('src') !== source) art.setAttribute('src', source);
+    }
     background.hidden = !visible || !backdrop;
     if (backdrop?.effect) background.dataset.effect = backdrop.effect;
     else delete background.dataset.effect;
@@ -115,20 +120,18 @@
   timeButton.addEventListener('click', function () { choose('time'); });
   sandButton.addEventListener('click', function () { choose('hourglass'); });
   moneyButton.addEventListener('click', function () { choose('money'); });
-  var tugging = false;
+  var tugAnimation;
   tailButton.addEventListener('click', function () {
-    if (tugging) return;
-    tugging = true;
-    tailButton.classList.add('tugging');
-    if (piggy.hasAttribute('data-skinned') && !reducedMotion.matches) {
-      piggy.animate([{ transform:'translateX(0)' }, { transform:'translateX(-3px)' }, { transform:'translateX(0)' }], { duration:300 });
-    }
-    setTimeout(function () {
-      period = periods[(periods.indexOf(period) + 1) % periods.length];
-      updateIncome(true);
-      tailButton.classList.remove('tugging');
-      tugging = false;
-    }, reducedMotion.matches ? 0 : 300);
+    period = periods[(periods.indexOf(period) + 1) % periods.length];
+    updateIncome(true);
+    tugAnimation?.cancel();
+    if (reducedMotion.matches) return;
+    var skinned = piggy.hasAttribute('data-skinned');
+    var movement = skinned ? 'translateX(-3px)' : 'scaleX(1.28) rotate(-3deg)';
+    tugAnimation = (skinned ? art : tailArt).animate(
+      [{ transform:'none' }, { transform:movement, offset:.4 }, { transform:'none' }],
+      { duration:300, easing:'ease-out' }
+    );
   });
   function pad(n) { return String(n).padStart(2, '0'); }
   function tick() {

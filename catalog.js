@@ -29,7 +29,7 @@
     return [tier, Object.keys(items).filter(function (id) { return id[0] === tier && id !== 'C04'; })];
   }));
   function artUrl(file) {
-    return file + '?v=10.1';
+    return file + '?v=11';
   }
   var catalog = { items: items, titles: titles, effects: effects, odds: odds, prices: prices, pool: pool, artUrl: artUrl,
     weights: groups.map(function (group) { return [group[0], group[1]]; }),

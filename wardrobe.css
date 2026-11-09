@@ -9,9 +9,6 @@
 }
 #skin-background { position: fixed; inset: 0; overflow: hidden; pointer-events: none; }
 #skin-background img { width: 100%; height: 100%; object-fit: cover; opacity: .65; }
-#piggy[data-skinned] #pig-art { clip-path: none; }
-#piggy[data-skinned] #pig-tail { background: transparent; }
-#piggy[data-skinned] #pig-tail img { opacity: 0; }
 #earnings-period-icon { color: #aaa; }
 #skin-open {
   position: fixed; z-index: 2; top: max(1rem, env(safe-area-inset-top)); right: max(1rem, env(safe-area-inset-right));
@@ -19,6 +16,38 @@
   font: 13px var(--skin-font); cursor: pointer;
 }
 #skin-open:hover, #skin-open:focus-visible { color: #fff; border-color: var(--skin-accent); }
+#dice-open {
+  position: fixed; z-index: 2; top: max(1rem, env(safe-area-inset-top)); left: max(1rem, env(safe-area-inset-left));
+  min-height: 44px; padding: 0 13px; border: 1px solid #525258; background: #0a0a0bd9; color: #d5d5dc;
+  font: 13px var(--skin-font); cursor: pointer;
+}
+#dice-open:hover, #dice-open:focus-visible { color: #fff; border-color: var(--skin-accent); }
+.utility-dialog {
+  width: min(30rem, calc(100% - 2rem)); max-height: calc(100dvh - 2rem); box-sizing: border-box;
+  padding: 18px; border: 1px solid var(--skin-line); background: var(--skin-panel); color: var(--skin-text);
+  font: 14px/1.6 var(--skin-font);
+}
+.utility-dialog::backdrop { background: #000c; }
+.utility-dialog header { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.utility-dialog h2 { margin: 0; font-size: 18px; }
+.utility-dialog ul { padding-inline-start: 1.4em; }
+.utility-dialog li + li { margin-top: .5em; }
+.utility-dialog button, #dice-count {
+  padding: 6px 12px; border: 1px solid var(--skin-line); color: inherit; background: #1b1b21; font: inherit;
+}
+.utility-dialog button { cursor: pointer; }
+.utility-dialog button:disabled { cursor: default; opacity: .5; }
+#dice-form { display: grid; gap: 9px; }
+#dice-count { width: 4em; }
+.dice-count { display: flex; align-items: center; gap: .5em; }
+#dice-inventory, #dice-form small { color: var(--skin-dim); }
+#dice-quote, #dice-message { margin: 0; color: var(--skin-accent); }
+#dice-message:not(:empty) { margin-top: .6em; }
+#dice-faces { display: flex; flex-wrap: wrap; gap: 6px; }
+#dice-faces span {
+  display: grid; place-items: center; width: 2em; height: 2em;
+  border: 1px solid var(--skin-line); background: #1b1b21; font-weight: bold;
+}
 #skin-window {
   width: min(980px, calc(100vw - 32px)); height: min(760px, calc(100dvh - 48px)); max-width: none; max-height: none;
   padding: 0; box-sizing: border-box; border: 2px solid #a2a2aa; background: var(--skin-panel); color: var(--skin-text);
@@ -67,6 +96,8 @@
 .skin-art { position: relative; overflow: hidden; min-height: 0; background: #08080b; }
 .skin-art img { display: block; width: 100%; height: 100%; object-fit: contain; }
 .skin-card .skin-art-pig img { transform: scale(1.20); }
+#piggy[data-effect="r05"] #pig-art, .skin-art[data-effect="r05"] img { image-rendering: pixelated; }
+.skin-card .skin-art[data-effect="r05"] img { transform: none; }
 .skin-art-background img { object-fit: cover; }
 .skin-caption { border-top: 1px solid #2a2a32; padding: 7px 9px; min-width: 0; background: #111116; }
 .skin-caption strong, .skin-caption span { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

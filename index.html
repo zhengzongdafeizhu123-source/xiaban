@@ -6,7 +6,7 @@
 <title>下班倒计时</title>
 <meta name="theme-color" content="#000000">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="stylesheet" href="wardrobe.css?v=10.1">
+<link rel="stylesheet" href="wardrobe.css?v=11">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='white'/%3E%3C/svg%3E">
 <style>
   html, body {
@@ -37,15 +37,19 @@
   #hourglass { width: auto; height: min(58svh, 600px); max-width: 76vw; object-fit: contain; }
   #stage[data-mode="hourglass"] #countdown { font-size: clamp(1.8rem, 5vw, 3rem); }
   #piggy { position: relative; width: min(820px, 94vw, 96svh); aspect-ratio: 4 / 3; }
-  #pig-art { display: block; width: 100%; height: 100%; object-fit: contain;
+  #pig-art, #pig-default-art { display: block; width: 100%; height: 100%; object-fit: contain; }
+  #pig-default-art {
+    background: white; mask: url('piggy-bank.png') center / contain no-repeat;
+    mask-mode: luminance;
     clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 0 49.724%, 18.163% 49.724%, 18.163% 36.832%, 0 36.832%); }
   #pig-tail { position: absolute; left: 10.014%; top: 36.832%; width: 8.149%; height: 12.892%;
-    padding: 0; margin: 0; border: 0; background: #000; cursor: pointer; touch-action: manipulation; }
-  #pig-tail img { display: block; width: 100%; height: 100%; transform-origin: right bottom; }
+    padding: 0; margin: 0; border: 0; background: transparent; cursor: pointer; touch-action: manipulation; }
+  #pig-tail-art {
+    display: block; width: 100%; height: 100%; transform-origin: right bottom;
+    background: white; mask: url('piggy-tail.png') center / 100% 100% no-repeat; mask-mode: luminance; }
+  #piggy[data-skinned] #pig-tail-art { visibility: hidden; }
   #pig-tail:focus-visible { outline: 1px dashed #888; outline-offset: 6px; }
   #pig-tail::after { content: ''; position: absolute; inset: -8px; }
-  #pig-tail.tugging img { animation: tail-tug .3s ease-out; }
-  @keyframes tail-tug { 0%, 100% { transform: scaleX(1); } 40% { transform: scaleX(1.28) rotate(-3deg); } }
   #earnings-total { position: absolute; left: 52%; top: 50%; transform: translate(-50%, -50%);
     width: 58%; padding: 12px 0; border: 0; color: #fff; background: transparent; text-align: center;
     font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace; }
@@ -62,7 +66,7 @@
   #piggy.earning #gain { animation: gain-rise 1s ease-out infinite; }
   @keyframes coin-drop { 0% { opacity: 0; transform: translateY(-5px); } 12% { opacity: 1; } 75% { opacity: 1; transform: translateY(var(--coin-travel, 70px)); } 88%, 100% { opacity: 0; transform: translateY(var(--coin-travel, 70px)) scale(.7); } }
   @keyframes gain-rise { 0% { opacity: 0; transform: translateY(8px); } 20%, 55% { opacity: 1; } 100% { opacity: 0; transform: translateY(-14px); } }
-  @media (prefers-reduced-motion: reduce) { #piggy.earning #coin { animation: none; opacity: 0; } #piggy.earning #gain { animation: none; opacity: 1; } #pig-tail.tugging img { animation: none; } }
+  @media (prefers-reduced-motion: reduce) { #piggy.earning #coin { animation: none; opacity: 0; } #piggy.earning #gain { animation: none; opacity: 1; } }
   #views { display: flex; gap: 16px; }
   #stage[data-mode="time"] #views { position: fixed; bottom: max(5svh, env(safe-area-inset-bottom)); }
   .view { position: relative; display: grid; place-items: center; width: 44px; height: 44px;
@@ -113,11 +117,14 @@
     right: max(1rem, env(safe-area-inset-right));
     bottom: max(0.35rem, env(safe-area-inset-bottom));
     z-index: 2;
-    padding: 0 0.25rem;
+    padding: 0.25rem;
+    border: 0;
     color: #aaa;
     background: #000;
     font: 0.7rem / 1.2 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    cursor: pointer;
   }
+  #app-version:hover, #app-version:focus-visible { color: #fff; text-decoration: underline; }
 </style>
 </head>
 <body>
@@ -127,8 +134,9 @@
   <canvas id="hourglass" width="400" height="600" role="img" aria-label="上方为剩余上班时间，下方为已经过的上班时间"></canvas>
   <div id="countdown">00:00:00</div>
   <section id="piggy" data-look="normal" aria-label="收入存钱罐" hidden>
-    <img id="pig-art" src="piggy-bank.png" alt="像素存钱罐">
-    <button id="pig-tail" type="button" aria-label="当前显示今日累计，拉动猪尾巴切换本月累计"><img src="piggy-tail.png" alt=""></button>
+    <div id="pig-default-art" aria-hidden="true"></div>
+    <img id="pig-art" alt="" hidden>
+    <button id="pig-tail" type="button" aria-label="切换金额显示"><span id="pig-tail-art" aria-hidden="true"></span></button>
     <canvas id="pig-effects" aria-hidden="true"></canvas>
     <span id="coin" aria-hidden="true"><img src="coin.png" alt=""></span>
     <span id="gain" aria-hidden="true">+¥0.0000</span>
@@ -158,7 +166,34 @@
 <div id="next-work-countdown" role="timer" aria-label="距离下一个工作日早上九点" hidden></div>
 <button id="install" type="button" hidden>安装到桌面</button>
 <button id="skin-open" type="button" aria-haspopup="dialog" hidden>皮肤管理</button>
-<small id="app-version" aria-label="版本 v10.1">v10.1</small>
+<button id="dice-open" type="button" aria-haspopup="dialog">投骰子</button>
+<button id="app-version" type="button" aria-label="版本 v11，查看更新摘要" aria-haspopup="dialog">v11</button>
+<dialog id="update-window" class="utility-dialog" aria-labelledby="update-heading">
+  <header><h2 id="update-heading">v11 更新摘要</h2><form method="dialog"><button>关闭</button></form></header>
+  <ul>
+    <li>新增投骰子小游戏。每份存档首送 5 颗免费骰子和两种加成券各 1 张。</li>
+    <li>修复快速点击猪尾巴时漏切换。每次点击立即切换金额显示。</li>
+    <li>修复默认猪皮在「天文台」等背景上的黑边。</li>
+    <li>提升「夜菌」猪皮和「天文台」背景的清晰度。</li>
+  </ul>
+</dialog>
+<dialog id="dice-window" class="utility-dialog" aria-labelledby="dice-heading">
+  <header><h2 id="dice-heading">投骰子</h2><form method="dialog"><button>关闭</button></form></header>
+  <p>每颗 50 元，每点返 15 元，掷到 1 点返 0 元。</p>
+  <p id="dice-inventory"></p>
+  <form id="dice-form">
+    <label class="dice-count">骰子数量 <input id="dice-count" type="number" min="1" step="1" value="1" required></label>
+    <label><input id="dice-upgrade" type="checkbox"> 1 点变 2 点 <small>每颗加 5 元</small></label>
+    <label><input id="dice-double" type="checkbox"> 6 点返双倍 <small>每颗加 15 元</small></label>
+    <p id="dice-quote"></p>
+    <button id="dice-roll" type="submit" disabled>投骰子</button>
+  </form>
+  <p id="dice-message" role="status"></p>
+  <section id="dice-result" aria-label="最近一局" hidden>
+    <p id="dice-result-text" aria-live="polite"></p>
+    <div id="dice-faces" aria-label="骰子点数"></div>
+  </section>
+</dialog>
 <dialog id="skin-window" aria-labelledby="skin-heading">
   <div class="skin-toolbar">
     <h2 id="skin-heading">皮肤管理</h2>
@@ -170,23 +205,27 @@
   <p id="skin-message" role="status"></p>
   <section id="skin-screen" tabindex="-1" aria-labelledby="skin-heading"></section>
 </dialog>
-<script src="catalog.js?v=10.1"></script>
-<script src="hourglass.js?v=10.1"></script>
-<script src="work-calendar.js?v=10.1"></script>
-<script src="earnings.js?v=10.1"></script>
-<script src="digits.js?v=10.1"></script>
-<script src="pig-effects.js?v=10.1"></script>
-<script src="cdk-catalog.js?v=10.1"></script>
-<script src="wallet-rules.js?v=10.1"></script>
-<script src="wallet-client.js?v=10.1"></script>
-<script src="wardrobe.js?v=10.1"></script>
-<script src="skin-motion.js?v=10.1"></script>
-<script src="countdown.js?v=10.1"></script>
+<script src="catalog.js?v=11"></script>
+<script src="hourglass.js?v=11"></script>
+<script src="work-calendar.js?v=11"></script>
+<script src="earnings.js?v=11"></script>
+<script src="digits.js?v=11"></script>
+<script src="pig-effects.js?v=11"></script>
+<script src="cdk-catalog.js?v=11"></script>
+<script src="wallet-rules.js?v=11"></script>
+<script src="wallet-client.js?v=11"></script>
+<script src="wardrobe.js?v=11"></script>
+<script src="skin-motion.js?v=11"></script>
+<script src="countdown.js?v=11"></script>
+<script src="dice.js?v=11"></script>
 <script>
   (function () {
+    document.getElementById('app-version').addEventListener('click', function () {
+      document.getElementById('update-window').showModal();
+    });
     if ('serviceWorker' in navigator) {
       var versionedUrl = new URL(location.href);
-      versionedUrl.searchParams.set('v', '10.1');
+      versionedUrl.searchParams.set('v', '11');
       if (location.href !== versionedUrl.href) history.replaceState(history.state, '', versionedUrl);
       navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(function (registration) {
         document.addEventListener('visibilitychange', function () {

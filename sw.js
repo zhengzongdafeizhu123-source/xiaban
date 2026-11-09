@@ -1,11 +1,11 @@
-const release = '10.1';
+const release = '11';
 const prefix = 'off-work-countdown-v';
 const cacheName = prefix + release;
 const html = './index.html?v=' + release;
 const versioned = [
   './catalog.js', './countdown.js', './hourglass.js', './earnings.js', './work-calendar.js',
   './digits.js', './pig-effects.js', './wallet-client.js', './wallet-rules.js', './cdk-catalog.js',
-  './wardrobe.js', './wardrobe.css', './skin-motion.js', './piggy-gold.png',
+  './wardrobe.js', './wardrobe.css', './skin-motion.js', './dice.js', './piggy-gold.png',
   './skins/B01.png',
   './skins/B02.png',
   './skins/B03.png',

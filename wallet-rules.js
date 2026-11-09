@@ -15,7 +15,60 @@
   const digest = id => typeof id === 'string' && /^[a-f0-9]{64}$/.test(id);
   const dateKey = key => typeof key === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(key);
   const drawSources = ['welcome', 'checkin', 'paid', 'cdk'];
+  const diceLimit = 20;
   const fail = code => { throw Error(code); };
+
+  function diceQuote(inventory, options) {
+    const { count, upgradeOne, doubleSix } = options;
+    if (!positive(count, diceLimit) || typeof upgradeOne !== 'boolean' || typeof doubleSix !== 'boolean') fail('diceCount');
+    const freeDice = Math.min(count, inventory.freeDice);
+    const freeOne = upgradeOne ? Math.min(count, inventory.freeOne) : 0;
+    const freeSix = doubleSix ? Math.min(count, inventory.freeSix) : 0;
+    const cost = (count - freeDice) * 50 + (upgradeOne ? (count - freeOne) * 5 : 0)
+      + (doubleSix ? (count - freeSix) * 15 : 0);
+    return { count, upgradeOne, doubleSix, freeDice, freeOne, freeSix, cost };
+  }
+
+  function dicePayout(rolls, options) {
+    return rolls.reduce((sum, face) => {
+      if (face === 1) return sum + (options.upgradeOne ? 30 : 0);
+      if (face === 6 && options.doubleSix) return sum + 180;
+      return sum + face * 15;
+    }, 0);
+  }
+
+  function rollDice(save, options, random) {
+    if (!save.dice) fail('diceWelcome');
+    const quote = diceQuote(save.dice, options);
+    if (options.cost !== quote.cost) fail('diceQuote');
+    const balance = save.balance - quote.cost * micro;
+    if (balance < 0) fail('balance');
+    const rolls = Array.from({ length: quote.count }, () => random(6) + 1);
+    const payout = dicePayout(rolls, quote);
+    const nextBalance = balance + payout * micro;
+    if (!nonnegative(nextBalance)) fail('balance');
+    save.balance = nextBalance;
+    save.dice.freeDice -= quote.freeDice;
+    save.dice.freeOne -= quote.freeOne;
+    save.dice.freeSix -= quote.freeSix;
+    save.dice.lastRoll = { ...quote, payout, rolls };
+    return save.dice.lastRoll;
+  }
+
+  function validDice(inventory) {
+    if (!record(inventory) || !nonnegative(inventory.freeDice) || inventory.freeDice > 5 ||
+        ![0, 1].includes(inventory.freeOne) || ![0, 1].includes(inventory.freeSix)) return false;
+    const roll = inventory.lastRoll;
+    if (roll === null) return true;
+    if (!record(roll) || !positive(roll.count, diceLimit) || typeof roll.upgradeOne !== 'boolean' ||
+        typeof roll.doubleSix !== 'boolean' || !Array.isArray(roll.rolls) || roll.rolls.length !== roll.count ||
+        !roll.rolls.every(face => positive(face, 6)) || roll.payout !== dicePayout(roll.rolls, roll) ||
+        !nonnegative(roll.freeDice) || roll.freeDice + inventory.freeDice > 5 ||
+        !nonnegative(roll.freeOne) || roll.freeOne + inventory.freeOne > 1 ||
+        !nonnegative(roll.freeSix) || roll.freeSix + inventory.freeSix > 1) return false;
+    const quote = diceQuote(roll, roll);
+    return ['freeDice', 'freeOne', 'freeSix', 'cost'].every(key => quote[key] === roll[key]);
+  }
 
   function newSave() {
     return {
@@ -104,7 +157,7 @@
     return {
       id: save.id, balance, today, month: monthly, owned: save.owned, stock: save.stock, equipped: save.equipped,
       goldRemaining: remainingGold(save.goldTime, now), goldCounting: sample.earning,
-      history: save.history, calendarReady: sample.available && due.cursor >= now,
+      history: save.history, dice: save.dice, calendarReady: sample.available && due.cursor >= now,
       drawGifts: { welcomeClaimed: save.welcome, checkedIn: save.checkin >= day, day,
         singles: count(save, 'free:1') + count(save, 'free:cdk:1'), tens: count(save, 'free:10') + count(save, 'free:cdk:10') }
     };
@@ -224,6 +277,10 @@
         return { added: true };
       }
       case 'draw': return draw(save, payload, now, random);
+      case 'diceWelcome':
+        if (!save.dice) save.dice = { freeDice: 5, freeOne: 1, freeSix: 1, lastRoll: null };
+        return {};
+      case 'rollDice': return rollDice(save, payload, random);
       case 'equip':
         if (!['pig', 'background'].includes(payload.slot)) fail('slot');
         if (payload.skin !== null) {
@@ -269,6 +326,7 @@
         (save.backfillCursor !== undefined &&
           (!epoch(save.backfillCursor) || save.backfillCursor < earningsStart || save.backfillCursor >= save.since)) ||
         !nonnegative(save.balance) || typeof save.welcome !== 'boolean' ||
+        (save.dice !== undefined && !validDice(save.dice)) ||
         !(save.checkin === '' || dateKey(save.checkin))) return false;
     if (!record(save.income) || !Object.entries(save.income).every(([day, amount]) => dateKey(day) && nonnegative(amount)) ||
         !Array.isArray(save.owned) || !save.owned.every(permanent) ||
@@ -285,5 +343,5 @@
         record(egg) && Object.hasOwn(odds, egg.tier) && Array.isArray(egg.rewards) && egg.rewards.every(validReward)));
   }
 
-  root.XiabanWalletRules = { newSave, settle, view, perform, validSave, validReward };
+  root.XiabanWalletRules = { newSave, settle, view, perform, validSave, validReward, diceQuote, diceLimit };
 })(globalThis);
